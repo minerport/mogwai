@@ -2,8 +2,8 @@
 
 CONFIG_FILE='mogwai.conf'
 CONFIGFOLDER='/root/.mogwaicore'
-COIN_DAEMON='mogwaid'
-COIN_CLI='mogwai-cli'
+COIN_DAEMON='/root/mogwaicore-0.12.2/bin/mogwaid'
+COIN_CLI='/root/mogwaicore-0.12.2/bin/mogwai-cli'
 COIN_PATH='/usr/local/bin/'
 COIN_TGZ='https://github.com/mogwaicoin/mogwai/releases/download/untagged-f2812049204fdc70402c/mogwaicore-0.12.2-linux64.tar.gz'
 COIN_ZIP='/root//mogwai/mogwaicore-0.12.2-linux64.tar.gz'
@@ -26,7 +26,7 @@ function download_node() {
   tar xvzf $COIN_ZIP
   chmod +x $COIN_DAEMON $COIN_CLI
   chown root: $COIN_DAEMON $COIN_CLI
-  cp 'root/mogwaicore-0.12.2/'$COIN_DAEMON 'root/mogwaicore-0.12.2/'$COIN_CLI $COIN_PATH
+  cp $COIN_DAEMON $COIN_CLI $COIN_PATH
   clear
 }
 
