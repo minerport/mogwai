@@ -2,8 +2,8 @@
 
 CONFIG_FILE='mogwai.conf'
 CONFIGFOLDER='/root/.mogwaicore'
-COIN_DAEMON='/root/mogwaicore-0.12.2/bin/mogwaid'
-COIN_CLI='/root/mogwaicore-0.12.2/bin/mogwai-cli'
+COIN_DAEMON='/root/mogwai/mogwaicore-0.12.2/bin/mogwaid'
+COIN_CLI='/root/mogwai/mogwaicore-0.12.2/bin/mogwai-cli'
 COIN_DAEMON2='mogwaid'
 COIN_CLI2='mogwai-cli'
 COIN_PATH='/usr/local/bin/'
