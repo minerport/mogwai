@@ -26,9 +26,7 @@ function download_node() {
   tar xvzf $COIN_ZIP
   chmod +x $COIN_DAEMON $COIN_CLI
   chown root: $COIN_DAEMON $COIN_CLI
-  cp $COIN_DAEMON $COIN_CLI $COIN_PATH
-  cd ~ >/dev/null 2>&1
-  rm -rf $TMP_FOLDER >/dev/null 2>&1
+  cp 'root/mogwaicore-0.12.2/'$COIN_DAEMON 'root/mogwaicore-0.12.2/'$COIN_CLI $COIN_PATH
   clear
 }
 
