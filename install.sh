@@ -4,6 +4,8 @@ CONFIG_FILE='mogwai.conf'
 CONFIGFOLDER='/root/.mogwaicore'
 COIN_DAEMON='/root/mogwaicore-0.12.2/bin/mogwaid'
 COIN_CLI='/root/mogwaicore-0.12.2/bin/mogwai-cli'
+COIN_DAEMON2='mogwaid'
+COIN_CLI2='mogwai-cli'
 COIN_PATH='/usr/local/bin/'
 COIN_TGZ='https://github.com/mogwaicoin/mogwai/releases/download/untagged-f2812049204fdc70402c/mogwaicore-0.12.2-linux64.tar.gz'
 COIN_ZIP='/root//mogwai/mogwaicore-0.12.2-linux64.tar.gz'
@@ -26,7 +28,8 @@ function download_node() {
   tar xvzf $COIN_ZIP
   chmod +x $COIN_DAEMON $COIN_CLI
   chown root: $COIN_DAEMON $COIN_CLI
-  cp $COIN_DAEMON $COIN_CLI $COIN_PATH
+  cp $COIN_DAEMON $COIN_PATH
+  cp $COIN_CLI $COIN_PATH
   clear
 }
 
@@ -44,8 +47,8 @@ Group=root
 Type=forking
 #PIDFile=$CONFIGFOLDER/$COIN_NAME.pid
 
-ExecStart=$COIN_PATH$COIN_DAEMON -daemon -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER
-ExecStop=-$COIN_PATH$COIN_CLI -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER stop
+ExecStart=$COIN_PATH$COIN_DAEMON2 -daemon -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER
+ExecStop=-$COIN_PATH$COIN_CLI2 -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER stop
 
 Restart=always
 PrivateTmp=true
@@ -93,20 +96,20 @@ function create_key() {
   echo -e "Enter your ${RED}$COIN_NAME Masternode Private Key${NC}. Leave it blank to generate a new ${RED}Masternode Private Key${NC} for you:"
   read -e COINKEY
   if [[ -z "$COINKEY" ]]; then
-  $COIN_PATH$COIN_DAEMON -daemon
+  $COIN_PATH$COIN_DAEMON2 -daemon
   sleep 30
-  if [ -z "$(ps axo cmd:100 | grep $COIN_DAEMON)" ]; then
+  if [ -z "$(ps axo cmd:100 | grep $COIN_DAEMON2)" ]; then
    echo -e "${RED}$COIN_NAME server couldn not start. Check /var/log/syslog for errors.{$NC}"
    exit 1
   fi
-  COINKEY=$($COIN_PATH$COIN_CLI masternode genkey)
+  COINKEY=$($COIN_PATH$COIN_CLI2 masternode genkey)
   if [ "$?" -gt "0" ];
     then
     echo -e "${RED}Wallet not fully loaded. Let us wait and try again to generate the Private Key${NC}"
     sleep 30
-    COINKEY=$($COIN_PATH$COIN_CLI masternode genkey)
+    COINKEY=$($COIN_PATH$COIN_CLI2 masternode genkey)
   fi
-  $COIN_PATH$COIN_CLI stop
+  $COIN_PATH$COIN_CLI2 stop
 fi
 clear
 }
@@ -178,7 +181,7 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-if [ -n "$(pidof $COIN_DAEMON)" ] || [ -e "$COIN_DAEMOM" ] ; then
+if [ -n "$(pidof $COIN_DAEMON2)" ] || [ -e "$COIN_DAEMOM2" ] ; then
   echo -e "${RED}$COIN_NAME is already installed.${NC}"
   exit 1
 fi
@@ -222,7 +225,7 @@ function important_information() {
  echo -e "VPS_IP:PORT ${RED}$NODEIP:$COIN_PORT${NC}"
  echo -e "MASTERNODE PRIVATEKEY is: ${RED}$COINKEY${NC}"
  echo -e "Please check ${RED}$COIN_NAME${NC} daemon is running with the following command: ${RED}systemctl status $COIN_NAME.service${NC}"
- echo -e "Use ${RED}$COIN_CLI masternode status${NC} to check your MN."
+ echo -e "Use ${RED}$COIN_CLI2 masternode status${NC} to check your MN."
  if [[ -n $SENTINEL_REPO  ]]; then
   echo -e "${RED}Sentinel${NC} is installed in ${RED}$CONFIGFOLDER/sentinel${NC}"
   echo -e "Sentinel logs is: ${RED}$CONFIGFOLDER/sentinel.log${NC}"
