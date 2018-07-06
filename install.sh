@@ -230,7 +230,7 @@ function important_information() {
  if [[ -n $SENTINEL_REPO  ]]; then
   echo -e "${RED}Sentinel${NC} is installed in ${RED}$CONFIGFOLDER/sentinel${NC}"
   echo -e "Sentinel logs is: ${RED}$CONFIGFOLDER/sentinel.log${NC}"
-  echo -e "CHT SHARED MN SERVICE LOCATED HERE: ${GREEN}https://sites.google.com/view/chtservices"{NC}
+  echo -e "CHT SHARED MN SERVICE LOCATED HERE: ${GREEN}http://mns.cryptohashtank.net"{NC}
  fi
  echo -e "================================================================================================================================"
 }
