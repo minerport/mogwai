@@ -695,49 +695,24 @@ function important_information() {
 
 
 function setup_node() {
-
   get_ip
-
   get_ip2
-
   create_config
-
   create_config2
-
-  create_key
-
+  reate_key
   create_key2
-
   update_config
-
   update_config2
-
   #download_blocks
-
   enable_firewall
-
   important_information
-
   configure_systemd
-
   configure_systemd2
-
 }
 
-
-
-
-
 ##### Main #####
-
 clear
-
-
-
 checks
-
 prepare_system
-
 download_node
-
 setup_node
