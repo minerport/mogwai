@@ -1,19 +1,22 @@
 #!/bin/bash
 
-CONFIG_FILE='mogwai.conf'
-CONFIGFOLDER='/root/.mogwaicore'
-COIN_DAEMON='/root/mogwai/mogwaicore-0.12.2/bin/mogwaid'
-COIN_CLI='/root/mogwai/mogwaicore-0.12.2/bin/mogwai-cli'
-COIN_DAEMON2='mogwaid'
-COIN_CLI2='mogwai-cli'
+CONFIG_FILE='intermodalcoin.conf'
+CONFIGFOLDER='/root/.intermodalcoin'
+CONFIGFOLDER2='/root/.intermodalcoin2'
+COIN_DAEMON='intermodalcoind'
+COIN_CLI='intermodalcoind'
 COIN_PATH='/usr/local/bin/'
-COIN_TGZ='https://github.com/mogwaicoin/mogwai/releases/download/untagged-f2812049204fdc70402c/mogwaicore-0.12.2-linux64.tar.gz'
-COIN_ZIP='/root//mogwai/mogwaicore-0.12.2-linux64.tar.gz'
-COIN_NAME='MOGWAI'
-COIN_PORT=17777
-RPC_PORT=17710
+COIN_TGZ='https://github.com/Intermodalcoin/Intermodal-Coin/files/1981435/imc-wallet-linux-17-daemon-precompiled.zip'
+COIN_ZIP=$(echo $COIN_TGZ | awk -F'/' '{print $NF}')
+COIN_BLOCK='https://github.com/zoldur/Intermodal/releases/download/v.1.0.0.6/blocks.tar.gz'
+COIN_NAME='Intermodal'
+COIN_NAME2='Intermodal2'
+COIN_PORT=11707
+RPC_PORT=11708
+RPC_PORT2=11709
 
 NODEIP=$(curl -s4 api.ipify.org)
+NODEIP2=$(curl -s4 api.ipify.org)
 
 
 RED='\033[0;31m'
@@ -33,6 +36,14 @@ function download_node() {
   clear
 }
 
+function download_blocks() {
+ echo -e "Downloading $COIN_NAME blocks"
+ cd $CONFIGFOLDER
+ wget -q $COIN_BLOCK
+ tar xvzf blocks.tar.gz >/dev/null 2>&1
+ rm blocks.tar.gz
+ cd -
+}
 
 function configure_systemd() {
   cat << EOF > /etc/systemd/system/$COIN_NAME.service
@@ -47,8 +58,8 @@ Group=root
 Type=forking
 #PIDFile=$CONFIGFOLDER/$COIN_NAME.pid
 
-ExecStart=$COIN_PATH$COIN_DAEMON2 -daemon -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER
-ExecStop=-$COIN_PATH$COIN_CLI2 -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER stop
+ExecStart=$COIN_PATH$COIN_DAEMON -daemon -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER
+ExecStop=-$COIN_PATH$COIN_CLI -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER stop
 
 Restart=always
 PrivateTmp=true
@@ -61,10 +72,39 @@ StartLimitBurst=5
 WantedBy=multi-user.target
 EOF
 
+function configure_systemd2() {
+  cat << EOF > /etc/systemd/system/$COIN_NAME2.service
+[Unit]
+Description=$COIN_NAME2 service
+After=network.target
+
+[Service]
+User=root
+Group=root
+
+Type=forking
+#PIDFile=$CONFIGFOLDER/$COIN_NAME.pid
+
+ExecStart=$COIN_PATH$COIN_DAEMON -daemon -conf=$CONFIGFOLDER2/$CONFIG_FILE -datadir=$CONFIGFOLDER2
+ExecStop=-$COIN_PATH$COIN_CLI -conf=$CONFIGFOLDER2/$CONFIG_FILE -datadir=$CONFIGFOLDER2 stop
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=10s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
+EO
+
   systemctl daemon-reload
   sleep 3
   systemctl start $COIN_NAME.service
+  systemctl start $COIN_NAME2.service
   systemctl enable $COIN_NAME.service >/dev/null 2>&1
+  systemctl enable $COIN_NAME2.service >/dev/null 2>&1
 
   if [[ -z "$(ps axo cmd:100 | egrep $COIN_DAEMON)" ]]; then
     echo -e "${RED}$COIN_NAME is not running${NC}, please investigate. You should start by running the following commands as root:"
@@ -92,24 +132,62 @@ port=$COIN_PORT
 EOF
 }
 
+function create_config2() {
+  mkdir $CONFIGFOLDER2 >/dev/null 2>&1
+  RPCUSER=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w10 | head -n1)
+  RPCPASSWORD=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w22 | head -n1)
+  cat << EOF > $CONFIGFOLDER/$CONFIG_FILE
+rpcuser=$RPCUSER
+rpcpassword=$RPCPASSWORD
+rpcport=$RPC_PORT2
+rpcallowip=127.0.0.1
+listen=1
+server=1
+daemon=1
+port=$COIN_PORT
+EOF
+}
+
 function create_key() {
   echo -e "Enter your ${RED}$COIN_NAME Masternode Private Key${NC}. Leave it blank to generate a new ${RED}Masternode Private Key${NC} for you:"
   read -e COINKEY
   if [[ -z "$COINKEY" ]]; then
-  $COIN_PATH$COIN_DAEMON2 -daemon
+  $COIN_PATH$COIN_DAEMON -daemon
   sleep 30
-  if [ -z "$(ps axo cmd:100 | grep $COIN_DAEMON2)" ]; then
+  if [ -z "$(ps axo cmd:100 | grep $COIN_DAEMON)" ]; then
    echo -e "${RED}$COIN_NAME server couldn not start. Check /var/log/syslog for errors.{$NC}"
    exit 1
   fi
-  COINKEY=$($COIN_PATH$COIN_CLI2 masternode genkey)
+  COINKEY=$($COIN_PATH$COIN_CLI masternode genkey)
   if [ "$?" -gt "0" ];
     then
     echo -e "${RED}Wallet not fully loaded. Let us wait and try again to generate the Private Key${NC}"
     sleep 30
-    COINKEY=$($COIN_PATH$COIN_CLI2 masternode genkey)
+    COINKEY=$($COIN_PATH$COIN_CLI masternode genkey)
   fi
-  $COIN_PATH$COIN_CLI2 stop
+  $COIN_PATH$COIN_CLI stop
+fi
+clear
+
+}
+function create_key2() {
+  echo -e "Enter your ${RED}$COIN_NAME Masternode Private Key${NC}. Leave it blank to generate a new ${RED}Masternode Private Key${NC} for you:"
+  read -e COINKEY2
+  if [[ -z "$COINKEY2" ]]; then
+  $COIN_PATH$COIN_DAEMON -datadir=/root/$CONFIGFOLDER2 -daemon
+  sleep 30
+  if [ -z "$(ps axo cmd:100 | grep $COIN_DAEMON)" ]; then
+   echo -e "${RED}$COIN_NAME server couldn not start. Check /var/log/syslog for errors.{$NC}"
+   exit 1
+  fi
+  COINKEY2=$($COIN_PATH$COIN_CLI masternode genkey)
+  if [ "$?" -gt "0" ];
+    then
+    echo -e "${RED}Wallet not fully loaded. Let us wait and try again to generate the Private Key${NC}"
+    sleep 30
+    COINKEY2=$($COIN_PATH$COIN_CLI masternode genkey)
+  fi
+  $COIN_PATH$COIN_CLI stop
 fi
 clear
 }
@@ -119,10 +197,22 @@ function update_config() {
   cat << EOF >> $CONFIGFOLDER/$CONFIG_FILE
 logintimestamps=1
 maxconnections=256
-#bind=$NODEIP
+bind=$NODEIP
 masternode=1
 externalip=$NODEIP:$COIN_PORT
 masternodeprivkey=$COINKEY
+EOF
+}
+
+function update_config2() {
+  sed -i 's/daemon=1/daemon=1/' $CONFIGFOLDER2/$CONFIG_FILE
+  cat << EOF >> $CONFIGFOLDER2/$CONFIG_FILE
+logintimestamps=1
+maxconnections=256
+bind=$NODEIP2
+masternode=1
+externalip=$NODEIP2:$COIN_PORT
+masternodeprivkey=$COINKEY2
 EOF
 }
 
@@ -139,6 +229,7 @@ function enable_firewall() {
 
 function get_ip() {
   declare -a NODE_IPS
+  
   for ips in $(netstat -i | awk '!/Kernel|Iface|lo/ {print $1," "}')
   do
     NODE_IPS+=($(curl --interface $ips --connect-timeout 2 -s4 api.ipify.org))
@@ -157,6 +248,30 @@ function get_ip() {
       NODEIP=${NODE_IPS[$choose_ip]}
   else
     NODEIP=${NODE_IPS[0]}
+  fi
+}
+
+function get_ip2() {
+  declare -a NODE_IPS2
+  
+  for ips in $(netstat -i | awk '!/Kernel|Iface|lo/ {print $1," "}')
+  do
+    NODE_IPS2+=($(curl --interface $ips --connect-timeout 2 -s4 api.ipify.org))
+  done
+
+  if [ ${#NODE_IPS2[@]} -gt 1 ]
+    then
+      echo -e "${GREEN}More than one IP. Please type 0 to use the first IP, 1 for the second and so on...${NC}"
+      INDEX=0
+      for ip in "${NODE_IPS2[@]}"
+      do
+        echo ${INDEX} $ip
+        let INDEX=${INDEX}+1
+      done
+      read -e choose_ip2
+      NODEIP2=${NODE_IPS2[$choose_ip2]}
+  else
+    NODEIP2=${NODE_IPS2[0]}
   fi
 }
 
@@ -181,14 +296,14 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-if [ -n "$(pidof $COIN_DAEMON2)" ] || [ -e "$COIN_DAEMOM2" ] ; then
+if [ -n "$(pidof $COIN_DAEMON)" ] || [ -e "$COIN_DAEMOM" ] ; then
   echo -e "${RED}$COIN_NAME is already installed.${NC}"
   exit 1
 fi
 }
 
 function prepare_system() {
-echo -e "Preparing the system to install ${GREEN}$COIN_NAME${NC} master node."
+echo -e "Prepare the system to install ${GREEN}$COIN_NAME${NC} master node."
 apt-get update >/dev/null 2>&1
 DEBIAN_FRONTEND=noninteractive apt-get update > /dev/null 2>&1
 DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y -qq upgrade >/dev/null 2>&1
@@ -200,7 +315,7 @@ apt-get update >/dev/null 2>&1
 apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" make software-properties-common \
 build-essential libtool autoconf libssl-dev libboost-dev libboost-chrono-dev libboost-filesystem-dev libboost-program-options-dev \
 libboost-system-dev libboost-test-dev libboost-thread-dev sudo automake git wget curl libdb4.8-dev bsdmainutils libdb4.8++-dev \
-libminiupnpc-dev libgmp3-dev ufw pkg-config libevent-dev  libdb5.3++ unzip libzmq5 >/dev/null 2>&1
+libminiupnpc-dev libgmp3-dev ufw pkg-config libevent-dev  libdb5.3++ unzip >/dev/null 2>&1
 if [ "$?" -gt "0" ];
   then
     echo -e "${RED}Not all required packages were installed properly. Try to install them manually by running the following commands:${NC}\n"
@@ -210,13 +325,15 @@ if [ "$?" -gt "0" ];
     echo "apt-get update"
     echo "apt install -y make build-essential libtool software-properties-common autoconf libssl-dev libboost-dev libboost-chrono-dev libboost-filesystem-dev \
 libboost-program-options-dev libboost-system-dev libboost-test-dev libboost-thread-dev sudo automake git curl libdb4.8-dev \
-bsdmainutils libdb4.8++-dev libminiupnpc-dev libgmp3-dev ufw pkg-config libevent-dev libdb5.3++ unzip libzmq5"
+bsdmainutils libdb4.8++-dev libminiupnpc-dev libgmp3-dev ufw fail2ban pkg-config libevent-dev unzip"
  exit 1
 fi
+
 clear
 }
 
 function important_information() {
+ echo
  echo -e "================================================================================================================================"
  echo -e "$COIN_NAME Masternode is up and running listening on port ${RED}$COIN_PORT${NC}."
  echo -e "Configuration file is: ${RED}$CONFIGFOLDER/$CONFIG_FILE${NC}"
@@ -224,25 +341,25 @@ function important_information() {
  echo -e "Stop: ${RED}systemctl stop $COIN_NAME.service${NC}"
  echo -e "VPS_IP:PORT ${RED}$NODEIP:$COIN_PORT${NC}"
  echo -e "MASTERNODE PRIVATEKEY is: ${RED}$COINKEY${NC}"
- echo -e "Please check ${RED}$COIN_NAME${NC} daemon is running with the following command: ${RED}systemctl status $COIN_NAME.service${NC}"
- echo -e "Use ${RED}$COIN_CLI2 masternode status${NC} to check your MN.${NC}"
- echo -e "JOIN CHT SHARED MN SERVICE LOCATED HERE: ${GREEN}https://sites.google.com/view/chtservices${NC}"
- if [[ -n $SENTINEL_REPO  ]]; then
-  echo -e "${RED}Sentinel${NC} is installed in ${RED}$CONFIGFOLDER/sentinel${NC}"
-  echo -e "Sentinel logs is: ${RED}$CONFIGFOLDER/sentinel.log${NC}"
-  echo -e "CHT SHARED MN SERVICE LOCATED HERE: ${GREEN}http://mns.cryptohashtank.net"{NC}
- fi
+ echo -e "Please check ${RED}$COIN_NAME${NC} is running with the following command: ${RED}systemctl status $COIN_NAME.service${NC}"
+ echo -e "The following command will show your $COIN_NAME MASTERNODE status: ${RED}$COIN_CLI masternode status${NC}"
  echo -e "================================================================================================================================"
 }
 
 function setup_node() {
   get_ip
+  get_ip2
   create_config
+  create_config2
   create_key
+  create_key2
   update_config
+  update_config2
+  #download_blocks
   enable_firewall
   important_information
   configure_systemd
+  configure_systemd2
 }
 
 
