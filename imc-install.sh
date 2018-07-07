@@ -102,187 +102,100 @@ EOF
 
 
   systemctl daemon-reload
-
   sleep 3
-
   systemctl start $COIN_NAME.service
-
   systemctl start $COIN_NAME2.service
-
   systemctl enable $COIN_NAME.service >/dev/null 2>&1
-
   systemctl enable $COIN_NAME2.service >/dev/null 2>&1
 
-
-
   if [[ -z "$(ps axo cmd:100 | egrep $COIN_DAEMON)" ]]; then
-
     echo -e "${RED}$COIN_NAME is not running${NC}, please investigate. You should start by running the following commands as root:"
-
     echo -e "${GREEN}systemctl start $COIN_NAME.service"
-
     echo -e "systemctl status $COIN_NAME.service"
-
     echo -e "less /var/log/syslog${NC}"
-
     exit 1
-
   fi
-
 }
 
 
-
-
-
 function create_config() {
-
   mkdir $CONFIGFOLDER >/dev/null 2>&1
-
   RPCUSER=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w10 | head -n1)
-
   RPCPASSWORD=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w22 | head -n1)
-
   cat << EOF > $CONFIGFOLDER/$CONFIG_FILE
-
 rpcuser=$RPCUSER
-
 rpcpassword=$RPCPASSWORD
-
 rpcport=$RPC_PORT
-
 rpcallowip=127.0.0.1
-
 listen=1
-
 server=1
-
 daemon=1
-
 port=$COIN_PORT
-
 EOF
-
 }
 
 
 
 function create_config2() {
-
   mkdir $CONFIGFOLDER2 >/dev/null 2>&1
-
   RPCUSER=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w10 | head -n1)
-
   RPCPASSWORD=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w22 | head -n1)
-
   cat << EOF > $CONFIGFOLDER/$CONFIG_FILE
-
 rpcuser=$RPCUSER
-
 rpcpassword=$RPCPASSWORD
-
 rpcport=$RPC_PORT2
-
 rpcallowip=127.0.0.1
-
 listen=1
-
 server=1
-
 daemon=1
-
 port=$COIN_PORT
-
 EOF
-
 }
 
 
 
 function create_key() {
-
   echo -e "Enter your ${RED}$COIN_NAME Masternode Private Key${NC}. Leave it blank to generate a new ${RED}Masternode Private Key${NC} for you:"
-
   read -e COINKEY
-
   if [[ -z "$COINKEY" ]]; then
-
   $COIN_PATH$COIN_DAEMON -daemon
-
   sleep 30
-
   if [ -z "$(ps axo cmd:100 | grep $COIN_DAEMON)" ]; then
-
    echo -e "${RED}$COIN_NAME server couldn not start. Check /var/log/syslog for errors.{$NC}"
-
    exit 1
-
   fi
-
   COINKEY=$($COIN_PATH$COIN_CLI masternode genkey)
-
   if [ "$?" -gt "0" ];
-
     then
-
     echo -e "${RED}Wallet not fully loaded. Let us wait and try again to generate the Private Key${NC}"
-
     sleep 30
-
     COINKEY=$($COIN_PATH$COIN_CLI masternode genkey)
-
   fi
-
   $COIN_PATH$COIN_CLI stop
-
 fi
-
 clear
-
-
-
 }
 
 function create_key2() {
-
   echo -e "Enter your ${RED}$COIN_NAME Masternode Private Key${NC}. Leave it blank to generate a new ${RED}Masternode Private Key${NC} for you:"
-
   read -e COINKEY2
-
   if [[ -z "$COINKEY2" ]]; then
-
   $COIN_PATH$COIN_DAEMON -datadir=/root/$CONFIGFOLDER2 -daemon
-
   sleep 30
-
   if [ -z "$(ps axo cmd:100 | grep $COIN_DAEMON)" ]; then
-
    echo -e "${RED}$COIN_NAME server couldn not start. Check /var/log/syslog for errors.{$NC}"
-
    exit 1
-
   fi
-
   COINKEY2=$($COIN_PATH$COIN_CLI masternode genkey)
-
   if [ "$?" -gt "0" ];
-
     then
-
     echo -e "${RED}Wallet not fully loaded. Let us wait and try again to generate the Private Key${NC}"
-
     sleep 30
-
     COINKEY2=$($COIN_PATH$COIN_CLI masternode genkey)
-
   fi
-
   $COIN_PATH$COIN_CLI stop
-
 fi
-
 clear
-
 }
 
 
