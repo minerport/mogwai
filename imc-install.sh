@@ -1,202 +1,103 @@
 #!/bin/bash
 
-
-
 CONFIG_FILE='intermodalcoin.conf'
-
 CONFIGFOLDER='/root/.intermodalcoin'
-
 CONFIGFOLDER2='/root/.intermodalcoin2'
-
 COIN_DAEMON='intermodalcoind'
-
 COIN_CLI='intermodalcoind'
-
 COIN_PATH='/usr/local/bin/'
-
 COIN_TGZ='https://github.com/Intermodalcoin/Intermodal-Coin/files/1981435/imc-wallet-linux-17-daemon-precompiled.zip'
-
 COIN_ZIP=$(echo $COIN_TGZ | awk -F'/' '{print $NF}')
-
 COIN_BLOCK='https://github.com/zoldur/Intermodal/releases/download/v.1.0.0.6/blocks.tar.gz'
-
 COIN_NAME='Intermodal'
-
 COIN_NAME2='Intermodal2'
-
 COIN_PORT=11707
-
 RPC_PORT=11708
-
 RPC_PORT2=11709
 
-
-
 NODEIP=$(curl -s4 api.ipify.org)
-
 NODEIP2=$(curl -s4 api.ipify.org)
 
-
-
-
-
 RED='\033[0;31m'
-
 GREEN='\033[0;32m'
-
 NC='\033[0m'
 
-
-
-
-
 function download_node() {
-
   echo -e "Preparing to download ${GREEN}$COIN_NAME${NC}."
-
   wget -q $COIN_TGZ
-
   compile_error
-
   tar xvzf $COIN_ZIP
-
   chmod +x $COIN_DAEMON $COIN_CLI
-
   chown root: $COIN_DAEMON $COIN_CLI
-
   cp $COIN_DAEMON $COIN_PATH
-
   cp $COIN_CLI $COIN_PATH
-
   clear
-
 }
-
-
 
 function download_blocks() {
-
  echo -e "Downloading $COIN_NAME blocks"
-
  cd $CONFIGFOLDER
-
  wget -q $COIN_BLOCK
-
  tar xvzf blocks.tar.gz >/dev/null 2>&1
-
  rm blocks.tar.gz
-
  cd -
-
 }
 
-
-
 function configure_systemd() {
-
   cat << EOF > /etc/systemd/system/$COIN_NAME.service
-
 [Unit]
-
 Description=$COIN_NAME service
-
 After=network.target
 
-
-
 [Service]
-
 User=root
-
 Group=root
 
-
-
 Type=forking
-
 #PIDFile=$CONFIGFOLDER/$COIN_NAME.pid
 
-
-
 ExecStart=$COIN_PATH$COIN_DAEMON -daemon -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER
-
 ExecStop=-$COIN_PATH$COIN_CLI -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER stop
 
-
-
 Restart=always
-
 PrivateTmp=true
-
 TimeoutStopSec=60s
-
 TimeoutStartSec=10s
-
 StartLimitInterval=120s
-
 StartLimitBurst=5
 
 
-
 [Install]
-
 WantedBy=multi-user.target
-
 EOF
 
-
-
 function configure_systemd2() {
-
   cat << EOF > /etc/systemd/system/$COIN_NAME2.service
-
 [Unit]
-
 Description=$COIN_NAME2 service
-
 After=network.target
 
-
-
 [Service]
-
 User=root
-
 Group=root
 
-
-
 Type=forking
-
 #PIDFile=$CONFIGFOLDER/$COIN_NAME.pid
-
 
 
 ExecStart=$COIN_PATH$COIN_DAEMON -daemon -conf=$CONFIGFOLDER2/$CONFIG_FILE -datadir=$CONFIGFOLDER2
-
 ExecStop=-$COIN_PATH$COIN_CLI -conf=$CONFIGFOLDER2/$CONFIG_FILE -datadir=$CONFIGFOLDER2 stop
 
-
-
 Restart=always
-
 PrivateTmp=true
-
 TimeoutStopSec=60s
-
 TimeoutStartSec=10s
-
 StartLimitInterval=120s
-
 StartLimitBurst=5
 
-
-
 [Install]
-
 WantedBy=multi-user.target
-
-EO
+EOF
 
 
 
