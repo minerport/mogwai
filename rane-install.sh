@@ -2,13 +2,13 @@
 
 CONFIG_FILE='rane.conf'
 CONFIGFOLDER='/root/.ranecore'
-COIN_DAEMON='/root/raned'
-COIN_CLI='/root/rane-cli'
+COIN_DAEMON='/root/mogwai/raned'
+COIN_CLI='/root/mogwai/rane-cli'
 COIN_DAEMON2='raned'
 COIN_CLI2='rane-cli'
 COIN_PATH='/usr/local/bin/'
 COIN_TGZ='https://github.com/CryptoRane/Rane/releases/download/V1.0.0/linux.binary.zip'
-COIN_ZIP='/root/linux.binary.zip'
+COIN_ZIP='/root/mogwai/linux.binary.zip'
 COIN_NAME='rane'
 COIN_PORT=3268
 RPC_PORT=5973
